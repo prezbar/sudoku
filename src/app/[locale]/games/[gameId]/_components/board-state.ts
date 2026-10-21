@@ -67,11 +67,11 @@ export type KeyPress = Pick<KeyboardEvent, "key" | "code" | "altKey" | "ctrlKey"
 
 export function boardActionForKeyPress(keyPress: KeyPress): BoardAction | null {
   if (keyPress.altKey || keyPress.ctrlKey || keyPress.metaKey) return null;
+  const digitOfKeyCode = digitKeyCodePattern.exec(keyPress.code)?.[1];
+  if (digitOfKeyCode !== undefined) return { type: "enterValue", value: Number(digitOfKeyCode) };
   const { key } = keyPress;
   if (digitKeyPattern.test(key)) return { type: "enterValue", value: Number(key) };
   if (clearingKeys.has(key)) return { type: "enterValue", value: emptyCellValue };
   const direction = moveDirectionByArrowKey.get(key);
-  if (direction) return { type: "moveSelection", direction };
-  const digitOfKeyCode = digitKeyCodePattern.exec(keyPress.code)?.[1];
-  return digitOfKeyCode === undefined ? null : { type: "enterValue", value: Number(digitOfKeyCode) };
+  return direction ? { type: "moveSelection", direction } : null;
 }

@@ -140,11 +140,12 @@ test.each([
   expect(boardActionForKeyPress({ key, code, ...noModifiers })).toEqual({ type: "enterValue", value });
 });
 
-test("a numpad key that the keyboard sends as an arrow moves the selection", () => {
-  expect(boardActionForKeyPress({ key: "ArrowUp", code: "Numpad8", ...noModifiers })).toEqual({
-    type: "moveSelection",
-    direction: "up",
-  });
+test.each([
+  ["ArrowUp", "Numpad8", 8],
+  ["End", "Numpad1", 1],
+  ["Clear", "Numpad5", 5],
+])("the %s key that a numpad sends with NumLock off still enters the digit of %s", (key, code, value) => {
+  expect(boardActionForKeyPress({ key, code, ...noModifiers })).toEqual({ type: "enterValue", value });
 });
 
 test.each([
