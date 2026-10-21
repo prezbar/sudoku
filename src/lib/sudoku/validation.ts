@@ -22,13 +22,12 @@ export function conflictingCellIndexes(board: Grid): Set<CellIndex> {
 
 export function isValidSolution(grid: Grid): boolean {
   if (grid.length !== gridCellCount) return false;
-  return grid.every(
-    (value, cellIndex) =>
-      Number.isInteger(value) &&
-      value >= 1 &&
-      value <= 9 &&
-      conflictingPeerIndexes(grid, cellIndex, value).length === 0,
-  );
+  for (let cellIndex = 0; cellIndex < gridCellCount; cellIndex++) {
+    const value = grid[cellIndex];
+    if (!Number.isInteger(value) || value < 1 || value > 9) return false;
+    if (conflictingPeerIndexes(grid, cellIndex, value).length > 0) return false;
+  }
+  return true;
 }
 
 export function isSolutionOf(puzzle: Grid, submission: Grid): boolean {

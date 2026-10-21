@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 
 import { parseGrid } from "./grid";
+import { countSolutions } from "./solver";
 import { conflictingCellIndexes, conflictingPeerIndexes, isSolutionOf, isValidSolution } from "./validation";
 
 const classicPuzzle = parseGrid("530070000600195000098000060800060003400803001700020006060000280000419005000080079");
@@ -56,6 +57,15 @@ test.each([
   ],
   ["every cell a 5", () => classicSolution.map(() => 5)],
   ["80 cells", () => classicSolution.slice(0, 80)],
+  ["81 holes", () => new Array<number>(81)],
+  [
+    "one hole",
+    () => {
+      const grid = classicSolution.slice();
+      delete grid[40];
+      return grid;
+    },
+  ],
   ["82 cells", () => [...classicSolution, 1]],
   [
     "a 10",
@@ -90,4 +100,17 @@ test("a valid grid that changes a given is not a solution of the puzzle", () => 
 
 test("an incomplete board is not a solution of the puzzle", () => {
   expect(isSolutionOf(classicPuzzle, classicPuzzle)).toBe(false);
+});
+
+test("a puzzle with two solutions accepts either of them", () => {
+  const swappableCellIndexes = [3, 4, 30, 31];
+  const twoSolutionPuzzle = classicSolution.map((value, cellIndex) =>
+    swappableCellIndexes.includes(cellIndex) ? 0 : value,
+  );
+  const alternativeSolution = classicSolution.slice();
+  [alternativeSolution[3], alternativeSolution[4], alternativeSolution[30], alternativeSolution[31]] = [7, 6, 6, 7];
+
+  expect(countSolutions(twoSolutionPuzzle)).toBe(2);
+  expect(isSolutionOf(twoSolutionPuzzle, classicSolution)).toBe(true);
+  expect(isSolutionOf(twoSolutionPuzzle, alternativeSolution)).toBe(true);
 });
