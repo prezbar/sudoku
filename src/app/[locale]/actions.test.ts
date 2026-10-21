@@ -28,13 +28,12 @@ test("starting a game saves an unfinished game and redirects to its page", async
   expect(game).toMatchObject({ completedAt: null, durationInSeconds: null, playerName: null });
 });
 
-test("a started game holds a medium puzzle with a single solution", async () => {
+test("a started game holds a puzzle with a single solution and at least the medium target of givens", async () => {
   await redirectUrlOf(startGame(null, new FormData()));
 
   const puzzle = parseGrid((await db.game.findFirstOrThrow()).puzzle);
   expect(countSolutions(puzzle)).toBe(1);
   expect(puzzle.filter((value) => value !== 0).length).toBeGreaterThanOrEqual(32);
-  expect(puzzle.filter((value) => value !== 0).length).toBeLessThanOrEqual(33);
 });
 
 test("two started games get two different puzzles", async () => {

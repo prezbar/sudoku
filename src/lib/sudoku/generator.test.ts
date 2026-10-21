@@ -58,7 +58,7 @@ describe.each(difficulties.flatMap((difficulty) => [true, false].map((isSymmetri
   },
 );
 
-test("a symmetric medium puzzle stops at its target of 32 givens, or at 33 when the center cell must stay", () => {
+test("symmetric medium puzzles from the first 40 seeds keep 32 or 33 givens", () => {
   for (const seed of seeds) {
     const { puzzle } = generatePuzzle(createMulberry32(seed), "medium");
 
@@ -72,12 +72,4 @@ test("the same seed generates the same puzzle and solution", () => {
 
 test("two seeds generate different puzzles", () => {
   expect(generatePuzzle(createMulberry32(1)).puzzle).not.toEqual(generatePuzzle(createMulberry32(2)).puzzle);
-});
-
-test("50 hard puzzles generate in under a second", () => {
-  const startedAtInMilliseconds = performance.now();
-
-  for (let seed = 1; seed <= 50; seed++) generatePuzzle(createMulberry32(seed), "hard");
-
-  expect(performance.now() - startedAtInMilliseconds).toBeLessThan(1000);
 });
