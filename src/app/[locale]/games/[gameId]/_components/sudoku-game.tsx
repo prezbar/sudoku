@@ -8,7 +8,13 @@ import { durationInSecondsBetween, formatDuration, type DurationInSeconds } from
 import { parseGrid, serializeGrid, type CellIndex, type CellValue, type SerializedGrid } from "@/lib/sudoku/grid";
 import { conflictingCellIndexes } from "@/lib/sudoku/validation";
 
-import { boardActionForKey, createBoardState, isBoardSolved, nextBoardState, type BoardAction } from "./board-state";
+import {
+  boardActionForKeyPress,
+  createBoardState,
+  isBoardSolved,
+  nextBoardState,
+  type BoardAction,
+} from "./board-state";
 import { CompletionForm } from "./completion-form";
 import { NumberPad } from "./number-pad";
 import { SudokuBoard } from "./sudoku-board";
@@ -44,7 +50,7 @@ export function SudokuGame({ gameId, puzzle, startedAt, savedResult }: SudokuGam
   }
 
   function handleBoardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const boardAction = boardActionForKey(event.key);
+    const boardAction = boardActionForKeyPress(event);
     if (!boardAction) return;
     event.preventDefault();
     const updatedBoardState = applyBoardAction(boardAction);

@@ -55,10 +55,17 @@ const moveDirectionByArrowKey = new Map<string, MoveDirection>([
 ]);
 const clearingKeys = new Set(["Backspace", "Delete", "0"]);
 const digitKeyPattern = /^[1-9]$/;
+const digitKeyCodePattern = /^(?:Digit|Numpad)([0-9])$/;
 
-export function boardActionForKey(key: string): BoardAction | null {
+export type KeyPress = Pick<KeyboardEvent, "key" | "code" | "altKey" | "ctrlKey" | "metaKey">;
+
+export function boardActionForKeyPress(keyPress: KeyPress): BoardAction | null {
+  if (keyPress.altKey || keyPress.ctrlKey || keyPress.metaKey) return null;
+  const { key } = keyPress;
   if (digitKeyPattern.test(key)) return { type: "enterValue", value: Number(key) };
   if (clearingKeys.has(key)) return { type: "enterValue", value: emptyCellValue };
   const direction = moveDirectionByArrowKey.get(key);
-  return direction ? { type: "moveSelection", direction } : null;
+  if (direction) return { type: "moveSelection", direction };
+  const digitOfKeyCode = digitKeyCodePattern.exec(keyPress.code)?.[1];
+  return digitOfKeyCode === undefined ? null : { type: "enterValue", value: Number(digitOfKeyCode) };
 }

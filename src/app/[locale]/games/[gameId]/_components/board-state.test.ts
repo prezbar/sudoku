@@ -2,7 +2,13 @@ import { expect, test } from "vitest";
 
 import { parseGrid } from "@/lib/sudoku/grid";
 
-import { boardActionForKey, createBoardState, isBoardSolved, nextBoardState, type BoardAction } from "./board-state";
+import {
+  boardActionForKeyPress,
+  createBoardState,
+  isBoardSolved,
+  nextBoardState,
+  type BoardAction,
+} from "./board-state";
 
 const classicPuzzle = parseGrid("530070000600195000098000060800060003400803001700020006060000280000419005000080079");
 const classicSolution = parseGrid("534678912672195348198342567859761423426853791713924856961537284287419635345286179");
@@ -98,20 +104,56 @@ test("a solved board is locked", () => {
   expect(nextBoardState(solvedState, { type: "enterValue", value: 0 })).toBe(solvedState);
 });
 
+const noModifiers = { altKey: false, ctrlKey: false, metaKey: false };
+
 test.each([
-  ["1", { type: "enterValue", value: 1 }],
-  ["9", { type: "enterValue", value: 9 }],
-  ["0", { type: "enterValue", value: 0 }],
-  ["Backspace", { type: "enterValue", value: 0 }],
-  ["Delete", { type: "enterValue", value: 0 }],
-  ["ArrowUp", { type: "moveSelection", direction: "up" }],
-  ["ArrowDown", { type: "moveSelection", direction: "down" }],
-  ["ArrowLeft", { type: "moveSelection", direction: "left" }],
-  ["ArrowRight", { type: "moveSelection", direction: "right" }],
-])("the %s key maps to its board action", (key, boardAction) => {
-  expect(boardActionForKey(key)).toEqual(boardAction);
+  ["1", "Digit1", { type: "enterValue", value: 1 }],
+  ["9", "Digit9", { type: "enterValue", value: 9 }],
+  ["0", "Digit0", { type: "enterValue", value: 0 }],
+  ["Backspace", "Backspace", { type: "enterValue", value: 0 }],
+  ["Delete", "Delete", { type: "enterValue", value: 0 }],
+  ["ArrowUp", "ArrowUp", { type: "moveSelection", direction: "up" }],
+  ["ArrowDown", "ArrowDown", { type: "moveSelection", direction: "down" }],
+  ["ArrowLeft", "ArrowLeft", { type: "moveSelection", direction: "left" }],
+  ["ArrowRight", "ArrowRight", { type: "moveSelection", direction: "right" }],
+])("the %s key maps to its board action", (key, code, boardAction) => {
+  expect(boardActionForKeyPress({ key, code, ...noModifiers })).toEqual(boardAction);
 });
 
-test.each(["a", "Enter", "Tab", " ", "10"])("the %j key maps to no board action", (key) => {
-  expect(boardActionForKey(key)).toBeNull();
+test.each([
+  ["&", "Digit1", 1],
+  ["é", "Digit2", 2],
+  ["ç", "Digit9", 9],
+  ["à", "Digit0", 0],
+  ["1", "Numpad1", 1],
+  ["9", "Numpad9", 9],
+  ["0", "Numpad0", 0],
+])("the %j key on the %s physical key maps to entering %i", (key, code, value) => {
+  expect(boardActionForKeyPress({ key, code, ...noModifiers })).toEqual({ type: "enterValue", value });
+});
+
+test("a numpad key that the keyboard sends as an arrow moves the selection", () => {
+  expect(boardActionForKeyPress({ key: "ArrowUp", code: "Numpad8", ...noModifiers })).toEqual({
+    type: "moveSelection",
+    direction: "up",
+  });
+});
+
+test.each([
+  ["a", "KeyA"],
+  ["Enter", "Enter"],
+  ["Tab", "Tab"],
+  [" ", "Space"],
+  ["10", ""],
+  ["-", "Minus"],
+])("the %j key maps to no board action", (key, code) => {
+  expect(boardActionForKeyPress({ key, code, ...noModifiers })).toBeNull();
+});
+
+test.each([
+  ["Control", { ctrlKey: true }],
+  ["Meta", { metaKey: true }],
+  ["Alt", { altKey: true }],
+])("a digit pressed with %s held is left to the browser", (_, modifiers) => {
+  expect(boardActionForKeyPress({ key: "1", code: "Digit1", ...noModifiers, ...modifiers })).toBeNull();
 });
