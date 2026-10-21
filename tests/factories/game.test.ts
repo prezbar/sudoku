@@ -28,9 +28,15 @@ test("a batch draws one distinct puzzle per game", async () => {
   expect(new Set(games.map((game) => game.puzzle)).size).toBe(3);
 });
 
-test("a completed game carries its player, its end and the duration between its start and end", async () => {
+test("a completed game carries its end and the duration between its start and end, but no player yet", async () => {
   const game = await gameFactory.completed().create();
 
-  expect(game.playerName).toEqual(expect.any(String));
+  expect(game.playerName).toBeNull();
   expect(game.completedAt!.getTime() - game.startedAt.getTime()).toBe(game.durationInSeconds! * 1000);
+});
+
+test("a named game carries its player", async () => {
+  const game = await gameFactory.completed().named().create();
+
+  expect(game.playerName).toEqual(expect.any(String));
 });

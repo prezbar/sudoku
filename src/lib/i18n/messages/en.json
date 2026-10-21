@@ -23,8 +23,15 @@
   },
   "SudokuGame": {
     "solvedTitle": "Solved!",
+    "completing": "Checking your grid with the server…",
     "solvedIn": "You finished in {duration}.",
     "savedResult": "{playerName} solved this grid in {duration}. The time is saved.",
+    "retryCompletion": "Try again",
+    "completionErrors": {
+      "gameNotFound": "This game no longer exists.",
+      "gridNotSolved": "The server could not confirm this grid as solved.",
+      "unexpected": "Something went wrong while checking your grid. Please try again."
+    },
     "instructions": "Select a cell, then type a digit or use the pad. Backspace, Delete or 0 clears it; the arrow keys move around."
   },
   "SudokuBoard": {
@@ -36,7 +43,7 @@
     "enterDigit": "Enter {digit}",
     "erase": "Erase"
   },
-  "CompletionForm": {
+  "PlayerNameForm": {
     "playerNameLabel": "Your name",
     "playerNamePlaceholder": "Ada Lovelace",
     "submit": "Save my time",
@@ -44,9 +51,9 @@
     "errors": {
       "playerNameRequired": "Enter your name to save your time.",
       "playerNameTooLong": "Keep your name to 30 characters or fewer.",
-      "gridNotSolved": "The server could not confirm this grid as solved.",
       "gameNotFound": "This game no longer exists.",
-      "gameAlreadyCompleted": "This game has already been saved.",
+      "gameNotCompleted": "Finish the grid before saving your name.",
+      "playerNameAlreadySaved": "A name is already saved for this game.",
       "unexpected": "Something went wrong while saving. Please try again."
     }
   }

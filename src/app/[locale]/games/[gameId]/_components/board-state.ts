@@ -1,10 +1,12 @@
 import {
   adjacentCellIndex,
   emptyCellValue,
+  serializeGrid,
   type CellIndex,
   type CellValue,
   type Grid,
   type MoveDirection,
+  type SerializedGrid,
 } from "@/lib/sudoku/grid";
 import { isSolutionOf } from "@/lib/sudoku/validation";
 
@@ -21,6 +23,10 @@ export function createBoardState(puzzle: Grid): BoardState {
 
 export function isBoardSolved(boardState: BoardState): boolean {
   return isSolutionOf(boardState.puzzle, boardState.board);
+}
+
+export function solutionOf(boardState: BoardState): SerializedGrid | null {
+  return isBoardSolved(boardState) ? serializeGrid(boardState.board) : null;
 }
 
 export function nextBoardState(boardState: BoardState, boardAction: BoardAction): BoardState {

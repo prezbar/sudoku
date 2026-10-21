@@ -9,29 +9,15 @@ import { pagePipe } from "@flefebvre/next-pipe/pipes";
 import { BestTimes } from "@/components/games/best-times";
 import { NewGameButton } from "@/components/games/new-game-button";
 import { db } from "@/infra/prisma/db";
-import { parseGrid, serializeGrid } from "@/lib/sudoku/grid";
-import { solvePuzzle } from "@/lib/sudoku/solver";
 
-import { SudokuGame, type SavedResult } from "./_components/sudoku-game";
+import { SudokuGame } from "./_components/sudoku-game";
+import { completedGameOf } from "./completed-game";
 
 async function GameBoard({ gameIdPromise }: { gameIdPromise: Promise<string> }) {
   const game = await db.game.findUnique({ where: { id: await gameIdPromise } });
   if (!game) notFound();
 
-  const solution = game.completedAt ? solvePuzzle(parseGrid(game.puzzle)) : null;
-  const savedResult: SavedResult | null =
-    solution && game.playerName !== null && game.durationInSeconds !== null
-      ? { playerName: game.playerName, durationInSeconds: game.durationInSeconds, solution: serializeGrid(solution) }
-      : null;
-
-  return (
-    <SudokuGame
-      gameId={game.id}
-      puzzle={game.puzzle}
-      startedAt={game.startedAt.toISOString()}
-      savedResult={savedResult}
-    />
-  );
+  return <SudokuGame gameId={game.id} puzzle={game.puzzle} completedGame={completedGameOf(game)} />;
 }
 
 export default pagePipe<PageProps<"/[locale]/games/[gameId]">>().handle(async ({ params }) => {

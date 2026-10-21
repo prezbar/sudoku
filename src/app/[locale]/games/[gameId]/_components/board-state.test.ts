@@ -1,12 +1,13 @@
 import { expect, test } from "vitest";
 
-import { parseGrid } from "@/lib/sudoku/grid";
+import { parseGrid, serializeGrid } from "@/lib/sudoku/grid";
 
 import {
   boardActionForKeyPress,
   createBoardState,
   isBoardSolved,
   nextBoardState,
+  solutionOf,
   type BoardAction,
 } from "./board-state";
 
@@ -96,6 +97,13 @@ test("a full board that breaks the rules is not solved", () => {
   brokenBoard[2] = (brokenBoard[2] % 9) + 1;
 
   expect(isBoardSolved({ ...createBoardState(classicPuzzle), board: brokenBoard })).toBe(false);
+});
+
+test("a solved board holds its solution, an unsolved one none", () => {
+  const solvedState = { ...createBoardState(classicPuzzle), board: classicSolution };
+
+  expect(solutionOf(solvedState)).toBe(serializeGrid(classicSolution));
+  expect(solutionOf(createBoardState(classicPuzzle))).toBeNull();
 });
 
 test("a solved board is locked", () => {

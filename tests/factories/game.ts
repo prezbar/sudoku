@@ -18,8 +18,8 @@ export const gameFactory = prismaFactorio.define("game", {
         startedAt,
         completedAt: new Date(startedAt.getTime() + durationInSeconds * 1000),
         durationInSeconds,
-        playerName: faker.person.firstName(),
       };
     },
+    named: ({ faker }) => ({ playerName: faker.person.firstName() }),
   },
 });

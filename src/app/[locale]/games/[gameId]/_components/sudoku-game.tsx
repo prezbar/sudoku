@@ -1,47 +1,61 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useRef, useState, type KeyboardEvent } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import { NewGameButton } from "@/components/games/new-game-button";
-import { durationInSecondsBetween, formatDuration, type DurationInSeconds } from "@/lib/games/duration";
-import { parseGrid, serializeGrid, type CellIndex, type CellValue, type SerializedGrid } from "@/lib/sudoku/grid";
+import { Button } from "@/components/ui/button";
+import { formatDuration } from "@/lib/games/duration";
+import { parseGrid, type CellIndex, type CellValue, type SerializedGrid } from "@/lib/sudoku/grid";
 import { conflictingCellIndexes } from "@/lib/sudoku/validation";
 
-import {
-  boardActionForKeyPress,
-  createBoardState,
-  isBoardSolved,
-  nextBoardState,
-  type BoardAction,
-} from "./board-state";
-import { CompletionForm } from "./completion-form";
+import { completeGame } from "../actions";
+import type { CompletedGame } from "../completed-game";
+import { boardActionForKeyPress, createBoardState, nextBoardState, solutionOf, type BoardAction } from "./board-state";
+import { completionStateOf, type CompletionState } from "./completion-state";
 import { NumberPad } from "./number-pad";
+import { PlayerNameForm } from "./player-name-form";
 import { SudokuBoard } from "./sudoku-board";
 
-export type SavedResult = { playerName: string; durationInSeconds: DurationInSeconds; solution: SerializedGrid };
+type SudokuGameProps = { gameId: string; puzzle: SerializedGrid; completedGame: CompletedGame | null };
 
-type SudokuGameProps = { gameId: string; puzzle: SerializedGrid; startedAt: string; savedResult: SavedResult | null };
-
-function initialBoardState(puzzle: SerializedGrid, savedResult: SavedResult | null) {
+function initialBoardState(puzzle: SerializedGrid, completedGame: CompletedGame | null) {
   const boardState = createBoardState(parseGrid(puzzle));
-  return savedResult ? { ...boardState, board: parseGrid(savedResult.solution) } : boardState;
+  return completedGame ? { ...boardState, board: parseGrid(completedGame.solution) } : boardState;
 }
 
-export function SudokuGame({ gameId, puzzle, startedAt, savedResult }: SudokuGameProps) {
+export function SudokuGame({ gameId, puzzle, completedGame }: SudokuGameProps) {
   const t = useTranslations("SudokuGame");
-  const [boardState, setBoardState] = useState(() => initialBoardState(puzzle, savedResult));
-  const [solvedInSeconds, setSolvedInSeconds] = useState<DurationInSeconds | null>(null);
+  const [boardState, setBoardState] = useState(() => initialBoardState(puzzle, completedGame));
+  const [savedPlayerName, setSavedPlayerName] = useState<string | null>(null);
+  const [completionState, dispatchCompletion, isCompleting] = useActionState(
+    async (_previousCompletionState: CompletionState, solution: SerializedGrid): Promise<CompletionState> => {
+      try {
+        return completionStateOf(await completeGame({ gameId, solution }));
+      } catch {
+        return { status: "failed", errorKey: "unexpected" };
+      }
+    },
+    { status: "pending" },
+  );
   const cellElementsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const isSolved = isBoardSolved(boardState);
+  const solution = solutionOf(boardState);
+  const isSolved = solution !== null;
+  const isCompletionNeeded = isSolved && completedGame === null;
+
+  useEffect(() => {
+    if (!isCompletionNeeded) return;
+    startTransition(() => dispatchCompletion(solution));
+  }, [isCompletionNeeded, solution, dispatchCompletion]);
+
+  const durationInSeconds =
+    completedGame?.durationInSeconds ??
+    (completionState.status === "completed" ? completionState.durationInSeconds : null);
+  const playerName = completedGame?.playerName ?? savedPlayerName;
 
   function applyBoardAction(boardAction: BoardAction) {
     const updatedBoardState = nextBoardState(boardState, boardAction);
-    if (updatedBoardState === boardState) return updatedBoardState;
-    setBoardState(updatedBoardState);
-    if (!isSolved && isBoardSolved(updatedBoardState)) {
-      setSolvedInSeconds(durationInSecondsBetween(new Date(startedAt), new Date()));
-    }
+    if (updatedBoardState !== boardState) setBoardState(updatedBoardState);
     return updatedBoardState;
   }
 
@@ -66,6 +80,50 @@ export function SudokuGame({ gameId, puzzle, startedAt, savedResult }: SudokuGam
     focusCell(boardState.selectedCellIndex);
   }
 
+  function retryCompletion() {
+    if (solution !== null) startTransition(() => dispatchCompletion(solution));
+  }
+
+  function renderCompletion() {
+    if (durationInSeconds !== null && playerName !== null) {
+      return (
+        <div className="mt-1 flex flex-col items-start gap-3">
+          <p role="status" className="text-sm">
+            {t("savedResult", { playerName, duration: formatDuration(durationInSeconds) })}
+          </p>
+          <NewGameButton />
+        </div>
+      );
+    }
+    if (durationInSeconds !== null) {
+      return (
+        <>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("solvedIn", { duration: formatDuration(durationInSeconds) })}
+          </p>
+          <PlayerNameForm gameId={gameId} onPlayerNameSave={setSavedPlayerName} />
+        </>
+      );
+    }
+    if (completionState.status === "failed" && !isCompleting) {
+      return (
+        <div className="mt-1 flex flex-col items-start gap-3">
+          <p role="alert" className="text-sm text-destructive">
+            {t(`completionErrors.${completionState.errorKey}`)}
+          </p>
+          {completionState.errorKey === "unexpected" ? (
+            <Button variant="outline" size="lg" onClick={retryCompletion} className="px-4">
+              {t("retryCompletion")}
+            </Button>
+          ) : (
+            <NewGameButton variant="outline" />
+          )}
+        </div>
+      );
+    }
+    return <p className="mt-1 text-sm text-muted-foreground">{t("completing")}</p>;
+  }
+
   return (
     <div className="flex w-full flex-col items-center gap-4">
       <SudokuBoard
@@ -84,26 +142,7 @@ export function SudokuGame({ gameId, puzzle, startedAt, savedResult }: SudokuGam
           className="w-full rounded-xl border border-emerald-300 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950/40"
         >
           <h2 className="text-lg font-semibold tracking-tight">{t("solvedTitle")}</h2>
-          {savedResult ? (
-            <div className="mt-1 flex flex-col items-start gap-3">
-              <p role="status" className="text-sm">
-                {t("savedResult", {
-                  playerName: savedResult.playerName,
-                  duration: formatDuration(savedResult.durationInSeconds),
-                })}
-              </p>
-              <NewGameButton />
-            </div>
-          ) : (
-            <>
-              {solvedInSeconds !== null && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {t("solvedIn", { duration: formatDuration(solvedInSeconds) })}
-                </p>
-              )}
-              <CompletionForm gameId={gameId} solvedGrid={serializeGrid(boardState.board)} />
-            </>
-          )}
+          {renderCompletion()}
         </section>
       ) : (
         <>
