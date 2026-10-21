@@ -19,9 +19,12 @@
 src/
   app/          App Router; see docs/codebase/app-router.md for its conventions
   components/   React components;
+    games/      Components more than one page uses
     ui/         Shadcn-vendored, edit only through the CLI
   lib/          Shared code
+    games/      Game rules shared by the pages: player name schema, durations, best times
     i18n/       Locale routing, request config, and the message files
+    sudoku/     Grid, seeded randomness, solver, generator and validation, ported from docs/sudoku.md
   infra/        Everything the app talks to the outside world through
     prisma/     Schema, client, and migrations
 data/           The local SQLite database files, gitignored

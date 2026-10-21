@@ -9,8 +9,15 @@ generator client {
   output   = "../../../generated/prisma"
 }
 
-model User {
+model Game {
   // Prisma 7 dropped cuid v1; `cuid(2)` is the supported spelling.
-  id    String @id @default(cuid(2))
-  email String @unique
+  id                String    @id @default(cuid(2))
+  // The givens, as 81 digits in row-major order, 0 for an empty cell.
+  puzzle            String
+  startedAt         DateTime  @default(now())
+  completedAt       DateTime?
+  durationInSeconds Int?
+  playerName        String?
+
+  @@index([durationInSeconds])
 }

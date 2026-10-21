@@ -1,6 +1,53 @@
 {
   "HomePage": {
     "title": "Sudoku",
-    "startFrom": "Start from <code>src/app/[locale]/page.tsx</code>."
+    "tagline": "A fresh grid every game. Fill every row, column and box with the digits 1 to 9, then put your name on the board."
+  },
+  "GamePage": {
+    "homeLink": "Sudoku",
+    "loadingBoard": "Loading your grid…"
+  },
+  "NotFoundPage": {
+    "title": "Nothing here",
+    "description": "This game does not exist, or the page has moved.",
+    "homeLink": "Back to the start"
+  },
+  "NewGameButton": {
+    "label": "New game",
+    "starting": "Preparing a grid…"
+  },
+  "BestTimes": {
+    "title": "Best times",
+    "loading": "Loading best times…",
+    "empty": "No finished games yet. Be the first!"
+  },
+  "SudokuGame": {
+    "solvedTitle": "Solved!",
+    "solvedIn": "You finished in {duration}.",
+    "savedResult": "{playerName} solved this grid in {duration}. The time is saved.",
+    "instructions": "Select a cell, then type a digit or use the pad. Backspace, Delete or 0 clears it; the arrow keys move around."
+  },
+  "SudokuBoard": {
+    "label": "Sudoku grid",
+    "cell": "Row {row}, column {column}: {state, select, given {{value}, given} filled {{value}} conflicting {{value}, conflicts with another cell} other {empty}}"
+  },
+  "NumberPad": {
+    "label": "Number pad",
+    "enterDigit": "Enter {digit}",
+    "erase": "Erase"
+  },
+  "CompletionForm": {
+    "playerNameLabel": "Your name",
+    "playerNamePlaceholder": "Ada Lovelace",
+    "submit": "Save my time",
+    "submitting": "Saving…",
+    "errors": {
+      "playerNameRequired": "Enter your name to save your time.",
+      "playerNameTooLong": "Keep your name to 30 characters or fewer.",
+      "gridNotSolved": "The server could not confirm this grid as solved.",
+      "gameNotFound": "This game no longer exists.",
+      "gameAlreadyCompleted": "This game has already been saved.",
+      "unexpected": "Something went wrong while saving. Please try again."
+    }
   }
 }

@@ -8,6 +8,7 @@ export default defineConfig({
       "@/generated": path.resolve(import.meta.dirname, "generated"),
       "@/tests": path.resolve(import.meta.dirname, "tests"),
       "@": path.resolve(import.meta.dirname, "src"),
+      "next/navigation": "next/dist/client/components/navigation.react-server.js",
     },
   },
   ssr: {
