@@ -1,11 +1,20 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { startTransition, useActionState, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  startTransition,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type KeyboardEvent,
+} from "react";
 
 import { NewGameButton } from "@/components/games/new-game-button";
 import { Button } from "@/components/ui/button";
 import { formatDuration } from "@/lib/games/duration";
+import { clearSavedProgress, readSavedProgress, restoredBoardOf, saveProgress } from "@/lib/games/saved-progress";
 import { parseGrid, type CellIndex, type CellValue, type SerializedGrid } from "@/lib/sudoku/grid";
 import { conflictingCellIndexes } from "@/lib/sudoku/validation";
 
@@ -19,19 +28,51 @@ import { SudokuBoard } from "./sudoku-board";
 
 type SudokuGameProps = { gameId: string; puzzle: SerializedGrid; completedGame: CompletedGame | null };
 
-function initialBoardState(puzzle: SerializedGrid, completedGame: CompletedGame | null) {
+function initialBoardState(
+  puzzle: SerializedGrid,
+  completedGame: CompletedGame | null,
+  savedProgress: SerializedGrid | null,
+) {
   const boardState = createBoardState(parseGrid(puzzle));
-  return completedGame ? { ...boardState, board: parseGrid(completedGame.solution) } : boardState;
+  if (completedGame) return { ...boardState, board: parseGrid(completedGame.solution) };
+  if (savedProgress) return { ...boardState, board: restoredBoardOf(boardState.puzzle, savedProgress) };
+  return boardState;
 }
 
-export function SudokuGame({ gameId, puzzle, completedGame }: SudokuGameProps) {
+const subscribeToNoChange = () => () => {};
+
+export function SudokuGame(sudokuGameProps: SudokuGameProps) {
+  const savedProgress = useSyncExternalStore(
+    subscribeToNoChange,
+    () => readSavedProgress(sudokuGameProps.gameId),
+    () => undefined,
+  );
+  const isInBrowser = savedProgress !== undefined;
+
+  return (
+    <SudokuGameFromProgress
+      key={isInBrowser ? "browser" : "server"}
+      {...sudokuGameProps}
+      savedProgress={savedProgress ?? null}
+    />
+  );
+}
+
+function SudokuGameFromProgress({
+  gameId,
+  puzzle,
+  completedGame,
+  savedProgress,
+}: SudokuGameProps & { savedProgress: SerializedGrid | null }) {
   const t = useTranslations("SudokuGame");
-  const [boardState, setBoardState] = useState(() => initialBoardState(puzzle, completedGame));
+  const [boardState, setBoardState] = useState(() => initialBoardState(puzzle, completedGame, savedProgress));
   const [savedPlayerName, setSavedPlayerName] = useState<string | null>(null);
   const [completionState, dispatchCompletion, isCompleting] = useActionState(
     async (_previousCompletionState: CompletionState, solution: SerializedGrid): Promise<CompletionState> => {
       try {
-        return completionStateOf(await completeGame({ gameId, solution }));
+        const completionState = completionStateOf(await completeGame({ gameId, solution }));
+        if (completionState.status === "completed") clearSavedProgress(gameId);
+        return completionState;
       } catch {
         return { status: "failed", errorKey: "unexpected" };
       }
@@ -42,6 +83,10 @@ export function SudokuGame({ gameId, puzzle, completedGame }: SudokuGameProps) {
   const solution = solutionOf(boardState);
   const isSolved = solution !== null;
   const isCompletionNeeded = isSolved && completedGame === null;
+
+  useEffect(() => {
+    if (completedGame !== null) clearSavedProgress(gameId);
+  }, [completedGame, gameId]);
 
   useEffect(() => {
     if (!isCompletionNeeded) return;
@@ -55,7 +100,11 @@ export function SudokuGame({ gameId, puzzle, completedGame }: SudokuGameProps) {
 
   function applyBoardAction(boardAction: BoardAction) {
     const updatedBoardState = nextBoardState(boardState, boardAction);
-    if (updatedBoardState !== boardState) setBoardState(updatedBoardState);
+    if (updatedBoardState === boardState) return boardState;
+    setBoardState(updatedBoardState);
+    if (updatedBoardState.board !== boardState.board) {
+      saveProgress(gameId, updatedBoardState.puzzle, updatedBoardState.board);
+    }
     return updatedBoardState;
   }
 

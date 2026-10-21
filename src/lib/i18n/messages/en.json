@@ -14,7 +14,8 @@
   },
   "NewGameButton": {
     "label": "New game",
-    "starting": "Preparing a grid…"
+    "starting": "Preparing a grid…",
+    "leaveUnfinishedGameConfirmation": "Start a new game? This grid is not finished yet."
   },
   "BestTimes": {
     "title": "Best times",
