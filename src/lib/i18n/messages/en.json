@@ -1,0 +1,6 @@
+{
+  "HomePage": {
+    "title": "Sudoku",
+    "startFrom": "Start from <code>src/app/[locale]/page.tsx</code>."
+  }
+}

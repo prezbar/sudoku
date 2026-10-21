@@ -1,0 +1,24 @@
+name: setup
+description: The environment, toolchain and dependencies every ci job starts from.
+
+runs:
+  using: composite
+  steps:
+    # The same starting environment a fresh clone gets, rather than a second list to keep in step.
+    - name: Environment
+      shell: bash
+      run: cp .env.example .env
+
+    # Before Setup Node, which needs pnpm on the PATH to cache its store.
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v6
+
+    - name: Setup Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: 24
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

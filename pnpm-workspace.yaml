@@ -1,0 +1,12 @@
+allowBuilds:
+  "@parcel/watcher": false
+  "@prisma/engines": true
+  "@swc/core": false
+  better-sqlite3: true
+  esbuild: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - "@flefebvre/next-pipe@2.0.0"
+  - "@flefebvre/prisma-factorio@1.0.0"
